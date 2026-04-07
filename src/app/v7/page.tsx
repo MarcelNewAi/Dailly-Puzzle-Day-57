@@ -1,7 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type ReactNode } from "react";
 import BuilderLayout from "./components/BuilderLayout";
+import CommandPalette from "./components/CommandPalette";
+import { CommandPaletteProvider } from "./components/CommandPaletteProvider";
 import LivePreview from "./components/LivePreview";
 import PreviewToolbar from "./components/PreviewToolbar";
 import SectionList from "./components/SectionList";
@@ -13,6 +15,7 @@ import HeroSection from "./components/sections/HeroSection";
 import PricingSection from "./components/sections/PricingSection";
 import StatsSection from "./components/sections/StatsSection";
 import TestimonialsSection from "./components/sections/TestimonialsSection";
+import type { CommandActionHandlers } from "./components/useCommands";
 
 const STORAGE_KEY = "v7_section_order";
 const DEFAULT_ORDER = ["hero", "features", "stats", "testimonials", "pricing", "faq", "contact", "footer"] as const;
@@ -278,51 +281,171 @@ export default function V7Page() {
     }, 2000);
   }, [persistOrder]);
 
+  const moveSectionByDirection = useCallback(
+    (direction: -1 | 1) => {
+      setSectionOrder((previousOrder) => {
+        if (previousOrder.length < 2) {
+          return previousOrder;
+        }
+
+        const activeElement = document.activeElement;
+        const rowElement =
+          activeElement instanceof HTMLElement ? activeElement.closest<HTMLElement>("[data-v7-item-index]") : null;
+        const parsedIndex = rowElement?.dataset.v7ItemIndex ? Number(rowElement.dataset.v7ItemIndex) : 0;
+        const fromIndex = Number.isFinite(parsedIndex)
+          ? Math.max(0, Math.min(parsedIndex, previousOrder.length - 1))
+          : 0;
+        const targetIndex = fromIndex + direction;
+
+        if (targetIndex < 0 || targetIndex >= previousOrder.length) {
+          return previousOrder;
+        }
+
+        const nextOrder = [...previousOrder];
+        const [movedSection] = nextOrder.splice(fromIndex, 1);
+        nextOrder.splice(targetIndex, 0, movedSection);
+        persistOrder(nextOrder);
+        return nextOrder;
+      });
+    },
+    [persistOrder],
+  );
+
+  const handleShuffle = useCallback(() => {
+    setDraggedIndex(null);
+    setDropIndex(null);
+
+    setSectionOrder((previousOrder) => {
+      const nextOrder = [...previousOrder];
+
+      for (let index = nextOrder.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [nextOrder[index], nextOrder[swapIndex]] = [nextOrder[swapIndex], nextOrder[index]];
+      }
+
+      persistOrder(nextOrder);
+      return nextOrder;
+    });
+  }, [persistOrder]);
+
+  const handleReverse = useCallback(() => {
+    setDraggedIndex(null);
+    setDropIndex(null);
+
+    setSectionOrder((previousOrder) => {
+      const nextOrder = [...previousOrder].reverse();
+      persistOrder(nextOrder);
+      return nextOrder;
+    });
+  }, [persistOrder]);
+
+  const handleClearSavedLayout = useCallback(() => {
+    const resetOrder = [...DEFAULT_ORDER];
+    window.localStorage.removeItem(STORAGE_KEY);
+    setSectionOrder(resetOrder);
+    setDraggedIndex(null);
+    setDropIndex(null);
+    setShowResetNotice(false);
+    setIsResetAnimating(false);
+    triggerPreviewPulse();
+  }, [triggerPreviewPulse]);
+
+  const handleToggleTheme = useCallback(() => {
+    const pageRoot = document.querySelector<HTMLElement>(".v7-page");
+    pageRoot?.classList.toggle("v7-cmd-theme-light");
+  }, []);
+
+  const handleExportLayout = useCallback(async () => {
+    if (!navigator.clipboard?.writeText) {
+      return false;
+    }
+
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(sectionOrder, null, 2));
+      return true;
+    } catch {
+      return false;
+    }
+  }, [sectionOrder]);
+
+  const commandActions = useMemo<CommandActionHandlers>(
+    () => ({
+      resetLayout: handleReset,
+      moveSectionUp: () => moveSectionByDirection(-1),
+      moveSectionDown: () => moveSectionByDirection(1),
+      shuffleSections: handleShuffle,
+      reverseSections: handleReverse,
+      scrollPreviewTop: () => {
+        previewRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      },
+      scrollPreviewBottom: () => {
+        const previewElement = previewRef.current;
+        if (!previewElement) {
+          return;
+        }
+        previewElement.scrollTo({ top: previewElement.scrollHeight, behavior: "smooth" });
+      },
+      toggleSidebar: () => {
+        setIsSectionListOpen((open) => !open);
+      },
+      toggleTheme: handleToggleTheme,
+      exportLayout: handleExportLayout,
+      clearSavedData: handleClearSavedLayout,
+    }),
+    [handleClearSavedLayout, handleExportLayout, handleReset, handleReverse, handleShuffle, handleToggleTheme, moveSectionByDirection],
+  );
+
   return (
-    <BuilderLayout
-      isSectionListOpen={isSectionListOpen}
-      onToggleSectionList={() => setIsSectionListOpen((open) => !open)}
-      sidebar={
-        <SectionList
-          sections={orderedSections}
-          draggedIndex={draggedIndex}
-          dropIndex={dropIndex}
-          isResetAnimating={isResetAnimating}
-          showResetNotice={showResetNotice}
-          onDragStart={(index) => {
-            setDraggedIndex(index);
-            setDropIndex(index);
-          }}
-          onDragHover={setDropIndex}
-          onDrop={handleDropCommit}
-          onDragEnd={() => {
-            setDraggedIndex(null);
-            setDropIndex(null);
-          }}
-          onKeyboardMove={handleKeyboardMove}
-          onReset={handleReset}
-        />
-      }
-      toolbar={
-        <PreviewToolbar
-          sectionCount={sectionOrder.length}
-          isSavedHot={isSavedHot}
-          showScrollTop={previewPastTop}
-          onScrollToTop={() => {
-            previewRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-          }}
-        />
-      }
-      preview={
-        <LivePreview
-          previewRef={previewRef}
-          sections={orderedSections}
-          previewPulsing={previewPulsing}
-          onPreviewScroll={(top) => {
-            setPreviewPastTop(top > 24);
-          }}
-        />
-      }
-    />
+    <CommandPaletteProvider>
+      <BuilderLayout
+        isSectionListOpen={isSectionListOpen}
+        onToggleSectionList={() => setIsSectionListOpen((open) => !open)}
+        sidebar={
+          <SectionList
+            sections={orderedSections}
+            draggedIndex={draggedIndex}
+            dropIndex={dropIndex}
+            isResetAnimating={isResetAnimating}
+            showResetNotice={showResetNotice}
+            onDragStart={(index) => {
+              setDraggedIndex(index);
+              setDropIndex(index);
+            }}
+            onDragHover={setDropIndex}
+            onDrop={handleDropCommit}
+            onDragEnd={() => {
+              setDraggedIndex(null);
+              setDropIndex(null);
+            }}
+            onKeyboardMove={handleKeyboardMove}
+            onReset={handleReset}
+          />
+        }
+        toolbar={
+          <>
+            <PreviewToolbar
+              sectionCount={sectionOrder.length}
+              isSavedHot={isSavedHot}
+              showScrollTop={previewPastTop}
+              onScrollToTop={() => {
+                previewRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+            />
+            <CommandPalette actions={commandActions} />
+          </>
+        }
+        preview={
+          <LivePreview
+            previewRef={previewRef}
+            sections={orderedSections}
+            previewPulsing={previewPulsing}
+            onPreviewScroll={(top) => {
+              setPreviewPastTop(top > 24);
+            }}
+          />
+        }
+      />
+    </CommandPaletteProvider>
   );
 }
+

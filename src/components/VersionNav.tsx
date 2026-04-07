@@ -11,6 +11,8 @@ const links = [
   { label: "V5", href: "/v5" },
   { label: "V6", href: "/v6" },
   { label: "V7", href: "/v7" },
+  { label: "V8", href: "/v8" },
+  { label: "V9", href: "/v9" },
 ];
 
 export default function VersionNav() {
