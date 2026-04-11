@@ -1,5 +1,6 @@
 ﻿import type { ReactNode } from "react";
 import { useRef } from "react";
+import { CustomScrollbar } from "@/components/ui/CustomScrollbar";
 import DraggableItem from "./DraggableItem";
 
 type SectionListItem = {
@@ -54,70 +55,73 @@ export default function SectionList({
         </p>
       </header>
 
-      <div className="v7-section-list" role="list" ref={listRef}>
-        {sections.map((section, index) => (
-          <div key={section.id} className="v7-section-row">
-            <div className={`v7-drop-indicator ${dropIndex === index ? "is-visible" : ""}`} aria-hidden="true" />
-            <DraggableItem
-              index={index}
-              name={section.name}
-              description={section.description}
-              icon={section.icon}
-              isDragging={draggedIndex === index}
-              isResetAnimating={isResetAnimating}
-              onDragStart={(event) => {
-                event.dataTransfer.effectAllowed = "move";
-                onDragStart(index);
-              }}
-              onDragOver={(event) => {
-                event.preventDefault();
-                onDragHover(getDropIndexFromPointer(index, event.clientY, event.currentTarget as HTMLElement));
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-                const targetDropIndex = getDropIndexFromPointer(index, event.clientY, event.currentTarget as HTMLElement);
-                onDrop(targetDropIndex);
-              }}
-              onDragEnd={onDragEnd}
-              onTouchStart={() => {
-                onDragStart(index);
-              }}
-              onTouchMove={(event) => {
-                if (draggedIndex === null) {
-                  return;
-                }
+      <div className="relative flex-1 min-h-0">
+        <div className="v7-section-list hide-native-scrollbar" role="list" ref={listRef}>
+          {sections.map((section, index) => (
+            <div key={section.id} className="v7-section-row">
+              <div className={`v7-drop-indicator ${dropIndex === index ? "is-visible" : ""}`} aria-hidden="true" />
+              <DraggableItem
+                index={index}
+                name={section.name}
+                description={section.description}
+                icon={section.icon}
+                isDragging={draggedIndex === index}
+                isResetAnimating={isResetAnimating}
+                onDragStart={(event) => {
+                  event.dataTransfer.effectAllowed = "move";
+                  onDragStart(index);
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  onDragHover(getDropIndexFromPointer(index, event.clientY, event.currentTarget as HTMLElement));
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const targetDropIndex = getDropIndexFromPointer(index, event.clientY, event.currentTarget as HTMLElement);
+                  onDrop(targetDropIndex);
+                }}
+                onDragEnd={onDragEnd}
+                onTouchStart={() => {
+                  onDragStart(index);
+                }}
+                onTouchMove={(event) => {
+                  if (draggedIndex === null) {
+                    return;
+                  }
 
-                event.preventDefault();
+                  event.preventDefault();
 
-                const touch = event.touches[0];
-                if (!touch) {
-                  return;
-                }
+                  const touch = event.touches[0];
+                  if (!touch) {
+                    return;
+                  }
 
-                const target = document
-                  .elementFromPoint(touch.clientX, touch.clientY)
-                  ?.closest<HTMLElement>("[data-v7-item-index]");
+                  const target = document
+                    .elementFromPoint(touch.clientX, touch.clientY)
+                    ?.closest<HTMLElement>("[data-v7-item-index]");
 
-                if (target?.dataset.v7ItemIndex) {
-                  const targetIndex = Number(target.dataset.v7ItemIndex);
-                  const targetDropIndex = getDropIndexFromPointer(targetIndex, touch.clientY, target);
-                  onDragHover(targetDropIndex);
-                  return;
-                }
+                  if (target?.dataset.v7ItemIndex) {
+                    const targetIndex = Number(target.dataset.v7ItemIndex);
+                    const targetDropIndex = getDropIndexFromPointer(targetIndex, touch.clientY, target);
+                    onDragHover(targetDropIndex);
+                    return;
+                  }
 
-                const listBounds = listRef.current?.getBoundingClientRect();
-                if (listBounds) {
-                  onDragHover(touch.clientY < listBounds.top + 20 ? 0 : sections.length);
-                }
-              }}
-              onTouchEnd={() => {
-                onDrop();
-              }}
-              onKeyboardMove={(direction) => onKeyboardMove(index, direction)}
-            />
-          </div>
-        ))}
-        <div className={`v7-drop-indicator ${dropIndex === sections.length ? "is-visible" : ""}`} aria-hidden="true" />
+                  const listBounds = listRef.current?.getBoundingClientRect();
+                  if (listBounds) {
+                    onDragHover(touch.clientY < listBounds.top + 20 ? 0 : sections.length);
+                  }
+                }}
+                onTouchEnd={() => {
+                  onDrop();
+                }}
+                onKeyboardMove={(direction) => onKeyboardMove(index, direction)}
+              />
+            </div>
+          ))}
+          <div className={`v7-drop-indicator ${dropIndex === sections.length ? "is-visible" : ""}`} aria-hidden="true" />
+        </div>
+        <CustomScrollbar scrollContainerRef={listRef} variant="card" thumbColor="#C6F135" thumbHoverColor="#A8CC2A" />
       </div>
 
       <footer className="v7-section-list-footer">

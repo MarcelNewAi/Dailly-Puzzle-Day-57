@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Bebas_Neue, DM_Sans, Oswald, Source_Sans_3 } from "next/font/google";
+import ExplanationTriggerButton from "@/components/ExplanationTriggerButton";
+import { CustomScrollbar } from "@/components/ui/CustomScrollbar";
 
 interface UserData {
   fullName: string;
@@ -212,6 +214,7 @@ function useLocalFormData(key: string) {
 }
 
 export default function V4Page() {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [flashCard, setFlashCard] = useState(false);
   const {
@@ -236,87 +239,94 @@ export default function V4Page() {
   const displayName = fields.fullName.trim() || "USER";
 
   return (
-    <main
-      className="v4-page"
-      style={
-        {
-          "--v4-font-display-primary": bebasNeue.style.fontFamily,
-          "--v4-font-display-fallback": oswald.style.fontFamily,
-          "--v4-font-body-primary": dmSans.style.fontFamily,
-          "--v4-font-body-fallback": sourceSans.style.fontFamily,
-        } as React.CSSProperties
-      }
-    >
-      <div className="v4-shell">
-        {isReturningUser ? <div className="v4-banner">WELCOME BACK, {displayName.toUpperCase()}</div> : null}
+    <>
+      <div ref={scrollRef} className="h-screen overflow-y-auto hide-native-scrollbar">
+        <main
+          className="v4-page"
+          style={
+            {
+              "--v4-font-display-primary": bebasNeue.style.fontFamily,
+              "--v4-font-display-fallback": oswald.style.fontFamily,
+              "--v4-font-body-primary": dmSans.style.fontFamily,
+              "--v4-font-body-fallback": sourceSans.style.fontFamily,
+            } as React.CSSProperties
+          }
+        >
+          <div className="v4-shell">
+            {isReturningUser ? <div className="v4-banner">WELCOME BACK, {displayName.toUpperCase()}</div> : null}
 
-        <h1 className="v4-title">SYSTEM // CONTACT</h1>
-        <p className="v4-subtitle">Your data is cached locally. We remember you.</p>
+            <h1 className="v4-title">SYSTEM // CONTACT</h1>
+            <p className="v4-subtitle">Your data is cached locally. We remember you.</p>
 
-        <div ref={cardRef} className={`v4-card ${flashCard ? "v4-card-flash" : ""}`}>
-          <form onSubmit={handleSubmit} className="v4-form">
-            {(
-              [
-                { id: "fullName", label: "Full Name", type: "text", value: fields.fullName },
-                { id: "email", label: "Email", type: "email", value: fields.email },
-                { id: "company", label: "Company", type: "text", value: fields.company },
-              ] as const
-            ).map((field, index) => (
-              <label key={field.id} className="v4-field-wrap" style={{ animationDelay: `${index * 80 + 280}ms` }}>
-                <span className="v4-label">{field.label}</span>
-                <input
-                  id={field.id}
-                  type={field.type}
-                  required
-                  value={field.value}
-                  onChange={(event) => setField(field.id, event.target.value)}
-                  className="v4-input"
-                />
-              </label>
-            ))}
+            <div ref={cardRef} className={`v4-card ${flashCard ? "v4-card-flash" : ""}`}>
+              <form onSubmit={handleSubmit} className="v4-form">
+                {(
+                  [
+                    { id: "fullName", label: "Full Name", type: "text", value: fields.fullName },
+                    { id: "email", label: "Email", type: "email", value: fields.email },
+                    { id: "company", label: "Company", type: "text", value: fields.company },
+                  ] as const
+                ).map((field, index) => (
+                  <label key={field.id} className="v4-field-wrap" style={{ animationDelay: `${index * 80 + 280}ms` }}>
+                    <span className="v4-label">{field.label}</span>
+                    <input
+                      id={field.id}
+                      type={field.type}
+                      required
+                      value={field.value}
+                      onChange={(event) => setField(field.id, event.target.value)}
+                      className="v4-input"
+                    />
+                  </label>
+                ))}
 
-            <label className="v4-field-wrap" style={{ animationDelay: "520ms" }}>
-              <span className="v4-label">Message</span>
-              <textarea
-                id="message"
-                rows={4}
-                required
-                value={fields.message}
-                onChange={(event) => setField("message", event.target.value)}
-                className="v4-input v4-textarea"
-              />
-            </label>
+                <label className="v4-field-wrap" style={{ animationDelay: "520ms" }}>
+                  <span className="v4-label">Message</span>
+                  <textarea
+                    id="message"
+                    rows={4}
+                    required
+                    value={fields.message}
+                    onChange={(event) => setField("message", event.target.value)}
+                    className="v4-input v4-textarea"
+                  />
+                </label>
 
-            <button type="submit" className="v4-submit">
-              TRANSMIT DATA
-            </button>
-          </form>
+                <button type="submit" className="v4-submit">
+                  TRANSMIT DATA
+                </button>
+              </form>
 
-          <button type="button" className="v4-clear" onClick={clear} aria-label="Clear local cached form data">
-            CLEAR LOCAL DATA
-          </button>
+              <button type="button" className="v4-clear" onClick={clear} aria-label="Clear local cached form data">
+                CLEAR LOCAL DATA
+              </button>
 
-          <div className="v4-meta">
-            {hasStoredData ? (
-              <>
-                <span className="v4-cache-status">
-                  <span className="v4-cache-dot" aria-hidden="true" />
-                  LOCAL CACHE: ACTIVE
-                </span>
-                <span className="v4-visit">
-                  Visit #{visitCount} | Last seen: {formatRelativeTime(previousLastVisit)}
-                </span>
-              </>
-            ) : (
-              <span className="v4-visit">Cache not initialized</span>
-            )}
+              <div className="v4-meta">
+                {hasStoredData ? (
+                  <>
+                    <span className="v4-cache-status">
+                      <span className="v4-cache-dot" aria-hidden="true" />
+                      LOCAL CACHE: ACTIVE
+                    </span>
+                    <span className="v4-visit">
+                      Visit #{visitCount} | Last seen: {formatRelativeTime(previousLastVisit)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="v4-visit">Cache not initialized</span>
+                )}
+              </div>
+
+              {notice === "saved" ? <p className="v4-notice v4-notice-ok">DATA CACHED SUCCESSFULLY</p> : null}
+              {notice === "purged" ? <p className="v4-notice v4-notice-warn">CACHE PURGED</p> : null}
+            </div>
           </div>
 
-          {notice === "saved" ? <p className="v4-notice v4-notice-ok">DATA CACHED SUCCESSFULLY</p> : null}
-          {notice === "purged" ? <p className="v4-notice v4-notice-warn">CACHE PURGED</p> : null}
-        </div>
+          <ExplanationTriggerButton versionId="v4" />
+        </main>
       </div>
-    </main>
+      <CustomScrollbar scrollContainerRef={scrollRef} variant="page" thumbColor="#00F0FF" thumbHoverColor="#00D4E0" />
+    </>
   );
 }
 

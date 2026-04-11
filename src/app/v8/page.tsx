@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { DM_Sans, Inter, JetBrains_Mono, Playfair_Display, Space_Grotesk } from "next/font/google";
+import ExplanationTriggerButton from "@/components/ExplanationTriggerButton";
+import { CustomScrollbar } from "@/components/ui/CustomScrollbar";
 import ThemeControls from "./components/ThemeControls";
 import ThemeHeader from "./components/ThemeHeader";
 import LivePreview from "./components/LivePreview";
@@ -170,14 +172,24 @@ function readInitialTheme(): ThemeSettings {
 }
 
 export default function V8Page() {
-  const [theme, setTheme] = useState<ThemeSettings>(readInitialTheme);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [theme, setTheme] = useState<ThemeSettings>(DEFAULT_THEME);
+  const [isThemeHydrated, setIsThemeHydrated] = useState(false);
   const [isControlsOpen, setIsControlsOpen] = useState(true);
   const [showResetToast, setShowResetToast] = useState(false);
   const toastTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    setTheme(readInitialTheme());
+    setIsThemeHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isThemeHydrated) {
+      return;
+    }
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(theme));
-  }, [theme]);
+  }, [isThemeHydrated, theme]);
 
   useEffect(() => {
     return () => {
@@ -229,60 +241,72 @@ export default function V8Page() {
   };
 
   return (
-    <main className={`${dmSans.variable} ${inter.variable} ${playfair.variable} ${jetbrains.variable} ${spaceGrotesk.variable} v8-page`} style={themeVars}>
-      <ThemeHeader />
+    <>
+      <div ref={scrollRef} className="h-screen overflow-y-auto hide-native-scrollbar">
+        <main className={`${dmSans.variable} ${inter.variable} ${playfair.variable} ${jetbrains.variable} ${spaceGrotesk.variable} v8-page`} style={themeVars}>
+          <ThemeHeader />
 
-      <div className="v8-main-shell">
-        <div className="v8-mobile-toggle-wrap">
-          <button
-            type="button"
-            className="v8-mobile-controls-toggle"
-            onClick={() => setIsControlsOpen((open) => !open)}
-            aria-expanded={isControlsOpen}
-            aria-controls="v8-controls-panel"
-          >
-            {isControlsOpen ? "Hide Controls" : "Show Controls"}
-          </button>
-        </div>
+          <div className="v8-main-shell">
+            <div className="v8-mobile-toggle-wrap">
+              <button
+                type="button"
+                className="v8-mobile-controls-toggle"
+                onClick={() => setIsControlsOpen((open) => !open)}
+                aria-expanded={isControlsOpen}
+                aria-controls="v8-controls-panel"
+              >
+                {isControlsOpen ? "Hide Controls" : "Show Controls"}
+              </button>
+            </div>
 
-        <div className="v8-main-grid" data-controls-open={isControlsOpen ? "true" : "false"}>
-          <ThemeControls
-            mode={theme.mode}
-            accentColor={theme.accentColor}
-            borderRadius={theme.borderRadius}
-            fontSize={theme.fontSize}
-            fontFamily={theme.fontFamily}
-            spacing={theme.spacing}
-            animationSpeed={theme.animationSpeed}
-            accentPresets={ACCENT_PRESETS}
-            fontOptions={FONT_OPTIONS}
-            onModeChange={(mode) => setTheme((current) => ({ ...current, mode }))}
-            onAccentColorChange={(accentColor) => setTheme((current) => ({ ...current, accentColor: normalizeHex(accentColor) }))}
-            onBorderRadiusChange={(borderRadius) => setTheme((current) => ({ ...current, borderRadius }))}
-            onFontSizeChange={(fontSize) => setTheme((current) => ({ ...current, fontSize }))}
-            onFontFamilyChange={(fontFamily) => setTheme((current) => ({ ...current, fontFamily }))}
-            onSpacingChange={(spacing) => setTheme((current) => ({ ...current, spacing }))}
-            onAnimationSpeedChange={(animationSpeed) => setTheme((current) => ({ ...current, animationSpeed }))}
-            onReset={handleReset}
-          />
-          <LivePreview />
-        </div>
+            <div className="v8-main-grid" data-controls-open={isControlsOpen ? "true" : "false"}>
+              <ThemeControls
+                mode={theme.mode}
+                accentColor={theme.accentColor}
+                borderRadius={theme.borderRadius}
+                fontSize={theme.fontSize}
+                fontFamily={theme.fontFamily}
+                spacing={theme.spacing}
+                animationSpeed={theme.animationSpeed}
+                accentPresets={ACCENT_PRESETS}
+                fontOptions={FONT_OPTIONS}
+                onModeChange={(mode) => setTheme((current) => ({ ...current, mode }))}
+                onAccentColorChange={(accentColor) => setTheme((current) => ({ ...current, accentColor: normalizeHex(accentColor) }))}
+                onBorderRadiusChange={(borderRadius) => setTheme((current) => ({ ...current, borderRadius }))}
+                onFontSizeChange={(fontSize) => setTheme((current) => ({ ...current, fontSize }))}
+                onFontFamilyChange={(fontFamily) => setTheme((current) => ({ ...current, fontFamily }))}
+                onSpacingChange={(spacing) => setTheme((current) => ({ ...current, spacing }))}
+                onAnimationSpeedChange={(animationSpeed) => setTheme((current) => ({ ...current, animationSpeed }))}
+                onReset={handleReset}
+              />
+              <LivePreview />
+            </div>
+          </div>
+
+          {!isControlsOpen ? (
+            <button
+              type="button"
+              className="v8-mobile-fab"
+              onClick={() => setIsControlsOpen(true)}
+              aria-label="Show controls panel"
+            >
+              🎨
+            </button>
+          ) : null}
+
+          <p className={`v8-reset-toast${showResetToast ? " is-visible" : ""}`} role="status" aria-live="polite">
+            Theme reset to defaults ✅
+          </p>
+
+          <ExplanationTriggerButton versionId="v8" />
+        </main>
       </div>
-
-      {!isControlsOpen ? (
-        <button
-          type="button"
-          className="v8-mobile-fab"
-          onClick={() => setIsControlsOpen(true)}
-          aria-label="Show controls panel"
-        >
-          🎨
-        </button>
-      ) : null}
-
-      <p className={`v8-reset-toast${showResetToast ? " is-visible" : ""}`} role="status" aria-live="polite">
-        Theme reset to defaults ✅
-      </p>
-    </main>
+      <CustomScrollbar
+        scrollContainerRef={scrollRef}
+        variant="page"
+        thumbColor={theme.accentColor}
+        thumbHoverColor={darkenColor(theme.accentColor, 10)}
+      />
+    </>
   );
 }

@@ -1,4 +1,8 @@
-﻿import ComputeCalculator from "../components/allocator/ComputeCalculator";
+"use client";
+
+import { useRef } from "react";
+import { CustomScrollbar } from "@/components/ui/CustomScrollbar";
+import ComputeCalculator from "../components/allocator/ComputeCalculator";
 
 function CalculatorPageIcon() {
   return (
@@ -16,18 +20,25 @@ function CalculatorPageIcon() {
 }
 
 export default function V5AllocatorPage() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   return (
-    <div className="nq-page">
-      <section className="nq-calculator-header nq-anim-rise nq-anim-delay-1">
-        <div className="nq-page-icon" aria-hidden="true">
-          <CalculatorPageIcon />
+    <>
+      <div ref={scrollRef} className="h-screen overflow-y-auto hide-native-scrollbar">
+        <div className="nq-page">
+          <section className="nq-calculator-header nq-anim-rise nq-anim-delay-1">
+            <div className="nq-page-icon" aria-hidden="true">
+              <CalculatorPageIcon />
+            </div>
+            <h1 className="nq-page-title">Compute Cost Calculator</h1>
+            <p className="nq-page-subtitle">
+              Calculate the exact Q-Credits required to deploy and run your AI model with quantum precision.
+            </p>
+          </section>
+          <ComputeCalculator />
         </div>
-        <h1 className="nq-page-title">Compute Cost Calculator</h1>
-        <p className="nq-page-subtitle">
-          Calculate the exact Q-Credits required to deploy and run your AI model with quantum precision.
-        </p>
-      </section>
-      <ComputeCalculator />
-    </div>
+      </div>
+      <CustomScrollbar scrollContainerRef={scrollRef} variant="page" thumbColor="#00F0FF" thumbHoverColor="#00D4E0" />
+    </>
   );
 }

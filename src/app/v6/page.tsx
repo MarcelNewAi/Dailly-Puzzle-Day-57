@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DM_Sans, Playfair_Display } from "next/font/google";
+import ExplanationTriggerButton from "@/components/ExplanationTriggerButton";
+import { CustomScrollbar } from "@/components/ui/CustomScrollbar";
 import GalleryHeader from "./components/GalleryHeader";
 import Lightbox from "./components/Lightbox";
 import MasonryGrid, { type GalleryImageData } from "./components/MasonryGrid";
@@ -41,6 +43,7 @@ const galleryImages: GalleryImageData[] = [
 ];
 
 export default function V6Page() {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<Category>("All");
   const [displayedImages, setDisplayedImages] = useState<GalleryImageData[]>(galleryImages);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
@@ -84,50 +87,57 @@ export default function V6Page() {
   }, [displayedImages.length]);
 
   return (
-    <main className={`${playfairDisplay.variable} ${dmSans.variable} v6-page`}>
-      <GalleryHeader
-        categories={categories}
-        activeCategory={activeCategory}
-        onCategoryChange={handleCategoryChange}
-      />
+    <>
+      <div ref={scrollRef} className="h-screen overflow-y-auto hide-native-scrollbar">
+        <main className={`${playfairDisplay.variable} ${dmSans.variable} v6-page`}>
+          <GalleryHeader
+            categories={categories}
+            activeCategory={activeCategory}
+            onCategoryChange={handleCategoryChange}
+          />
 
-      <MasonryGrid
-        key={animationSeed}
-        images={displayedImages}
-        isFilteringOut={isFilteringOut}
-        onImageClick={(index) => {
-          if (canOpenLightbox) {
-            setSelectedIndex(index);
-          }
-        }}
-      />
+          <MasonryGrid
+            key={animationSeed}
+            images={displayedImages}
+            isFilteringOut={isFilteringOut}
+            onImageClick={(index) => {
+              if (canOpenLightbox) {
+                setSelectedIndex(index);
+              }
+            }}
+          />
 
-      <footer className="v6-footer" aria-live="polite">
-        {footerText}
-      </footer>
+          <footer className="v6-footer" aria-live="polite">
+            {footerText}
+          </footer>
 
-      <Lightbox
-        images={displayedImages}
-        currentIndex={selectedIndex}
-        onClose={() => setSelectedIndex(-1)}
-        onPrev={() => {
-          setSelectedIndex((current) => {
-            if (current < 0 || displayedImages.length === 0) {
-              return -1;
-            }
-            return (current - 1 + displayedImages.length) % displayedImages.length;
-          });
-        }}
-        onNext={() => {
-          setSelectedIndex((current) => {
-            if (current < 0 || displayedImages.length === 0) {
-              return -1;
-            }
-            return (current + 1) % displayedImages.length;
-          });
-        }}
-      />
-    </main>
+          <Lightbox
+            images={displayedImages}
+            currentIndex={selectedIndex}
+            onClose={() => setSelectedIndex(-1)}
+            onPrev={() => {
+              setSelectedIndex((current) => {
+                if (current < 0 || displayedImages.length === 0) {
+                  return -1;
+                }
+                return (current - 1 + displayedImages.length) % displayedImages.length;
+              });
+            }}
+            onNext={() => {
+              setSelectedIndex((current) => {
+                if (current < 0 || displayedImages.length === 0) {
+                  return -1;
+                }
+                return (current + 1) % displayedImages.length;
+              });
+            }}
+          />
+
+          <ExplanationTriggerButton versionId="v6" />
+        </main>
+      </div>
+      <CustomScrollbar scrollContainerRef={scrollRef} variant="page" thumbColor="#D4A574" thumbHoverColor="#B8884C" />
+    </>
   );
 }
 

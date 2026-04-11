@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type ReactNode } from "react";
+import ExplanationTriggerButton from "@/components/ExplanationTriggerButton";
+import { CustomScrollbar } from "@/components/ui/CustomScrollbar";
 import BuilderLayout from "./components/BuilderLayout";
 import CommandPalette from "./components/CommandPalette";
 import { CommandPaletteProvider } from "./components/CommandPaletteProvider";
@@ -153,7 +155,8 @@ function readInitialOrder(): SectionId[] {
 }
 
 export default function V7Page() {
-  const [sectionOrder, setSectionOrder] = useState<SectionId[]>(readInitialOrder);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [sectionOrder, setSectionOrder] = useState<SectionId[]>([...DEFAULT_ORDER]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const [isSavedHot, setIsSavedHot] = useState(false);
@@ -196,6 +199,10 @@ export default function V7Page() {
     },
     [triggerPreviewPulse, triggerSavedState],
   );
+
+  useEffect(() => {
+    setSectionOrder(readInitialOrder());
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -396,56 +403,62 @@ export default function V7Page() {
   );
 
   return (
-    <CommandPaletteProvider>
-      <BuilderLayout
-        isSectionListOpen={isSectionListOpen}
-        onToggleSectionList={() => setIsSectionListOpen((open) => !open)}
-        sidebar={
-          <SectionList
-            sections={orderedSections}
-            draggedIndex={draggedIndex}
-            dropIndex={dropIndex}
-            isResetAnimating={isResetAnimating}
-            showResetNotice={showResetNotice}
-            onDragStart={(index) => {
-              setDraggedIndex(index);
-              setDropIndex(index);
-            }}
-            onDragHover={setDropIndex}
-            onDrop={handleDropCommit}
-            onDragEnd={() => {
-              setDraggedIndex(null);
-              setDropIndex(null);
-            }}
-            onKeyboardMove={handleKeyboardMove}
-            onReset={handleReset}
+    <>
+      <div ref={scrollRef} className="h-screen overflow-y-auto hide-native-scrollbar">
+        <CommandPaletteProvider>
+          <BuilderLayout
+            isSectionListOpen={isSectionListOpen}
+            onToggleSectionList={() => setIsSectionListOpen((open) => !open)}
+            sidebar={
+              <SectionList
+                sections={orderedSections}
+                draggedIndex={draggedIndex}
+                dropIndex={dropIndex}
+                isResetAnimating={isResetAnimating}
+                showResetNotice={showResetNotice}
+                onDragStart={(index) => {
+                  setDraggedIndex(index);
+                  setDropIndex(index);
+                }}
+                onDragHover={setDropIndex}
+                onDrop={handleDropCommit}
+                onDragEnd={() => {
+                  setDraggedIndex(null);
+                  setDropIndex(null);
+                }}
+                onKeyboardMove={handleKeyboardMove}
+                onReset={handleReset}
+              />
+            }
+            toolbar={
+              <>
+                <PreviewToolbar
+                  sectionCount={sectionOrder.length}
+                  isSavedHot={isSavedHot}
+                  showScrollTop={previewPastTop}
+                  onScrollToTop={() => {
+                    previewRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                />
+                <CommandPalette actions={commandActions} />
+              </>
+            }
+            preview={
+              <LivePreview
+                previewRef={previewRef}
+                sections={orderedSections}
+                previewPulsing={previewPulsing}
+                onPreviewScroll={(top) => {
+                  setPreviewPastTop(top > 24);
+                }}
+              />
+            }
           />
-        }
-        toolbar={
-          <>
-            <PreviewToolbar
-              sectionCount={sectionOrder.length}
-              isSavedHot={isSavedHot}
-              showScrollTop={previewPastTop}
-              onScrollToTop={() => {
-                previewRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            />
-            <CommandPalette actions={commandActions} />
-          </>
-        }
-        preview={
-          <LivePreview
-            previewRef={previewRef}
-            sections={orderedSections}
-            previewPulsing={previewPulsing}
-            onPreviewScroll={(top) => {
-              setPreviewPastTop(top > 24);
-            }}
-          />
-        }
-      />
-    </CommandPaletteProvider>
+          <ExplanationTriggerButton versionId="v7" />
+        </CommandPaletteProvider>
+      </div>
+      <CustomScrollbar scrollContainerRef={scrollRef} variant="page" thumbColor="#C6F135" thumbHoverColor="#A8CC2A" />
+    </>
   );
 }
 

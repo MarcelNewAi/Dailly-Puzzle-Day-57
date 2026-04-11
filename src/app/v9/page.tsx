@@ -1,7 +1,9 @@
 "use client";
 
 import { DM_Sans, Fraunces, Playfair_Display } from "next/font/google";
-import { useEffect, useMemo } from "react";
+import { useMemo, useRef } from "react";
+import ExplanationTriggerButton from "@/components/ExplanationTriggerButton";
+import { CustomScrollbar } from "@/components/ui/CustomScrollbar";
 import { useActiveSection } from "./components/ScrollTracker";
 import StickyCtaBar from "./components/StickyCtaBar";
 import FaqSection from "./components/sections/FaqSection";
@@ -35,21 +37,9 @@ const playfair = Playfair_Display({
 const sectionIds = ["hero", "problem", "solution", "features", "social-proof", "pricing", "faq", "final-cta"] as const;
 
 export default function V9Page() {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const trackedSections = useMemo(() => [...sectionIds], []);
   const activeSection = useActiveSection(trackedSections);
-
-  useEffect(() => {
-    const body = document.body;
-    const root = document.documentElement;
-
-    body.classList.add("v9-has-sticky-bar");
-    root.classList.add("v9-has-sticky-bar");
-
-    return () => {
-      body.classList.remove("v9-has-sticky-bar");
-      root.classList.remove("v9-has-sticky-bar");
-    };
-  }, []);
 
   const handleCtaClick = () => {
     const pricingSection = document.getElementById("pricing");
@@ -57,47 +47,53 @@ export default function V9Page() {
   };
 
   return (
-    <main className={`${dmSans.variable} ${fraunces.variable} ${playfair.variable} v9-page`}>
-      <SectionWrapper id="hero" className="v9-surface-primary">
-        <HeroSection />
-      </SectionWrapper>
+    <>
+      <div ref={scrollRef} className="h-screen overflow-y-auto hide-native-scrollbar pb-20">
+        <main className={`${dmSans.variable} ${fraunces.variable} ${playfair.variable} v9-page`}>
+          <SectionWrapper id="hero" className="v9-surface-primary">
+            <HeroSection />
+          </SectionWrapper>
 
-      <SectionWrapper id="problem" className="v9-surface-problem">
-        <ProblemSection />
-      </SectionWrapper>
+          <SectionWrapper id="problem" className="v9-surface-problem">
+            <ProblemSection />
+          </SectionWrapper>
 
-      <SectionWrapper id="solution" className="v9-surface-primary">
-        <SolutionSection />
-      </SectionWrapper>
+          <SectionWrapper id="solution" className="v9-surface-primary">
+            <SolutionSection />
+          </SectionWrapper>
 
-      <SectionWrapper id="features" className="v9-surface-secondary">
-        <FeaturesSection />
-      </SectionWrapper>
+          <SectionWrapper id="features" className="v9-surface-secondary">
+            <FeaturesSection />
+          </SectionWrapper>
 
-      <SectionWrapper id="social-proof" className="v9-surface-primary">
-        <SocialProofSection />
-      </SectionWrapper>
+          <SectionWrapper id="social-proof" className="v9-surface-primary">
+            <SocialProofSection />
+          </SectionWrapper>
 
-      <SectionWrapper id="pricing" className="v9-surface-secondary">
-        <PricingSection />
-      </SectionWrapper>
+          <SectionWrapper id="pricing" className="v9-surface-secondary">
+            <PricingSection />
+          </SectionWrapper>
 
-      <SectionWrapper id="faq" className="v9-surface-primary">
-        <FaqSection />
-      </SectionWrapper>
+          <SectionWrapper id="faq" className="v9-surface-primary">
+            <FaqSection />
+          </SectionWrapper>
 
-      <SectionWrapper id="final-cta" className="v9-surface-accent">
-        <FinalCtaSection />
-      </SectionWrapper>
+          <SectionWrapper id="final-cta" className="v9-surface-accent">
+            <FinalCtaSection />
+          </SectionWrapper>
 
-      <footer className="v9-footer">
-        <div className="v9-shell v9-footer-inner">
-          <p>Built for modern teams. Trusted by 2,000+ product organizations.</p>
-          <p>(c) 2026 LaunchFlow. All rights reserved.</p>
-        </div>
-      </footer>
+          <footer className="v9-footer">
+            <div className="v9-shell v9-footer-inner">
+              <p>Built for modern teams. Trusted by 2,000+ product organizations.</p>
+              <p>(c) 2026 LaunchFlow. All rights reserved.</p>
+            </div>
+          </footer>
 
-      <StickyCtaBar activeSection={activeSection} onCtaClick={handleCtaClick} />
-    </main>
+          <StickyCtaBar activeSection={activeSection} onCtaClick={handleCtaClick} />
+          <ExplanationTriggerButton versionId="v9" />
+        </main>
+      </div>
+      <CustomScrollbar scrollContainerRef={scrollRef} variant="page" thumbColor="#6366F1" thumbHoverColor="#4F46E5" />
+    </>
   );
 }
