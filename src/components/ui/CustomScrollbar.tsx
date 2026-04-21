@@ -8,12 +8,15 @@ interface CustomScrollbarProps {
   className?: string;
   thumbColor?: string;
   thumbHoverColor?: string;
+  thumbWidth?: number;
   trackColorLight?: string;
   trackColorDark?: string;
 }
 
 const MIN_THUMB_SIZE = 40;
-const SCROLLBAR_WIDTH = 9;
+const DEFAULT_SCROLLBAR_WIDTH = 9;
+const MIN_SCROLLBAR_WIDTH = 6;
+const MAX_SCROLLBAR_WIDTH = 14;
 const RIGHT_OFFSET_PX = 3;
 const VISIBILITY_THRESHOLD_PX = 5;
 
@@ -23,6 +26,7 @@ export function CustomScrollbar({
   className = '',
   thumbColor = '#d32f2f',
   thumbHoverColor,
+  thumbWidth = DEFAULT_SCROLLBAR_WIDTH,
   trackColorLight = 'rgba(0, 0, 0, 0.05)',
   trackColorDark = 'rgba(255, 255, 255, 0.05)',
 }: CustomScrollbarProps) {
@@ -31,7 +35,12 @@ export function CustomScrollbar({
   const [isDragging, setIsDragging] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return window.matchMedia('(min-width: 768px)').matches;
+  });
 
   const dragStart = useRef<{ offsetY: number; scrollTop: number; pointerY: number }>({
     offsetY: 0,
@@ -44,7 +53,6 @@ export function CustomScrollbar({
     if (typeof window === 'undefined') return;
     const mediaQuery = window.matchMedia('(min-width: 768px)');
     const handleChange = (event: MediaQueryListEvent) => setIsDesktop(event.matches);
-    setIsDesktop(mediaQuery.matches);
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
@@ -162,6 +170,8 @@ export function CustomScrollbar({
 
   const interactiveState = isHovering || isDragging;
   const currentThumbColor = interactiveState && thumbHoverColor ? thumbHoverColor : thumbColor;
+  const resolvedThumbWidth = Math.min(Math.max(thumbWidth, MIN_SCROLLBAR_WIDTH), MAX_SCROLLBAR_WIDTH);
+  const resolvedTrackColor = trackColorLight || trackColorDark;
 
   const wrapperClasses = [
     'pointer-events-none hidden md:flex z-30 items-start justify-end',
@@ -171,12 +181,12 @@ export function CustomScrollbar({
 
   return (
     <div className={wrapperClasses} aria-hidden>
-      <div className="relative h-full" style={{ width: `${SCROLLBAR_WIDTH + RIGHT_OFFSET_PX}px` }}>
-        <div className="absolute inset-y-0" style={{ right: RIGHT_OFFSET_PX, width: `${SCROLLBAR_WIDTH}px` }}>
+      <div className="relative h-full" style={{ width: `${resolvedThumbWidth + RIGHT_OFFSET_PX}px` }}>
+        <div className="absolute inset-y-0" style={{ right: RIGHT_OFFSET_PX, width: `${resolvedThumbWidth}px` }}>
           <div
             ref={trackRef}
             className="relative h-full w-full rounded-full"
-            style={{ backgroundColor: trackColorLight }}
+            style={{ backgroundColor: resolvedTrackColor }}
           >
             <div
               className="absolute left-0 w-full"
