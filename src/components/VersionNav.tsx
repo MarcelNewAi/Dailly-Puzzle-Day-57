@@ -111,6 +111,27 @@ const links: VersionLink[] = [
     href: "/v25",
     keywords: ["countdown", "scarcity", "offer", "localstorage", "phase", "v25"],
   },
+  {
+    id: "V26",
+    title: "Mini Usage Dashboard",
+    description: "Brutalist terminal-style SaaS usage monitor with live metric states and adaptive CTA",
+    href: "/v26",
+    keywords: ["usage", "dashboard", "terminal", "metrics", "plan", "v26"],
+  },
+  {
+    id: "V27",
+    title: "API Key Dashboard",
+    description: "Client-side key generation with reveal, copy, and regeneration controls",
+    href: "/v27",
+    keywords: ["api key", "dashboard", "keystone", "localstorage", "v27"],
+  },
+  {
+    id: "V28",
+    title: "Draft Autosave & Recovery System",
+    description: "Debounced localStorage autosave with recovery banner and editorial writing flow",
+    href: "/v28",
+    keywords: ["draft", "autosave", "recovery", "editor", "compose", "v28"],
+  },
 ];
 
 function SearchIcon() {
