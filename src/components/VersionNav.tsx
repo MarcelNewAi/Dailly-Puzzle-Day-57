@@ -132,6 +132,13 @@ const links: VersionLink[] = [
     href: "/v28",
     keywords: ["draft", "autosave", "recovery", "editor", "compose", "v28"],
   },
+  {
+    id: "V29",
+    title: "Undo/Redo History System",
+    description: "Snapshot-based history stack with jump-to-state timeline and keyboard shortcuts",
+    href: "/v29",
+    keywords: ["undo", "redo", "history", "timeline", "board", "v29"],
+  },
 ];
 
 function SearchIcon() {
